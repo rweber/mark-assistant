@@ -127,6 +127,24 @@ export async function runMark(
         );
       }
 
+      // Handle output truncation (#013)
+      if (response.stop_reason === "max_tokens") {
+        console.warn(`Agent run ${runId}: output truncated at max_tokens`);
+        const partialText = response.content
+          .filter((b): b is Anthropic.TextBlock => b.type === "text")
+          .map((b) => b.text)
+          .join("\n");
+
+        return await finishRun(
+          runId,
+          "completed",
+          partialText || "Output was truncated due to length limits.",
+          iterations,
+          totalTokens,
+          startTime
+        );
+      }
+
       // Process tool calls
       if (response.stop_reason === "tool_use") {
         const toolResults: Anthropic.ToolResultBlockParam[] = [];

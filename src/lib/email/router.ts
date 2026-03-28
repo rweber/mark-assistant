@@ -62,6 +62,14 @@ export async function routeEmail(
   // Check if sender is an owner
   const ownerEmail = process.env.OWNER_EMAIL?.toLowerCase();
   if (ownerEmail && senderEmail.toLowerCase() === ownerEmail) {
+    // Verify email authentication to prevent spoofing (#004)
+    if (!isEmailAuthenticated(headers)) {
+      console.warn(
+        `Owner email from ${senderEmail} failed SPF/DKIM check — treating as unknown`
+      );
+      return { ...base, type: "unknown", contactId: null };
+    }
+
     // Check if it contains approval keywords
     if (APPROVAL_PATTERN.test(base.bodyText)) {
       return { ...base, type: "owner_approval", contactId: null };
@@ -94,6 +102,37 @@ function isAutoReply(
 
   const combined = `${subject} ${body}`;
   return AUTO_REPLY_PATTERNS.some((p) => p.test(combined));
+}
+
+/**
+ * Check email authentication headers (SPF/DKIM/ARC) from Resend.
+ * Returns true if the email passes authentication or if no auth headers are present
+ * (to avoid blocking in dev/test environments).
+ */
+function isEmailAuthenticated(headers: Record<string, string>): boolean {
+  // Resend provides authentication results in these headers
+  const spf =
+    headers["received-spf"] ??
+    headers["Received-SPF"] ??
+    "";
+  const authResults =
+    headers["authentication-results"] ??
+    headers["Authentication-Results"] ??
+    "";
+
+  // If no authentication headers present (dev mode), allow through
+  if (!spf && !authResults) return true;
+
+  // Check SPF
+  if (spf && /fail/i.test(spf)) return false;
+
+  // Check Authentication-Results for DKIM/SPF failures
+  if (authResults) {
+    if (/dkim=fail/i.test(authResults)) return false;
+    if (/spf=fail/i.test(authResults)) return false;
+  }
+
+  return true;
 }
 
 /**

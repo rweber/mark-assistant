@@ -26,7 +26,13 @@ export async function sendApprovedOutreach(): Promise<{
 
   if (!approved || approved.length === 0) return { sent, failed };
 
-  for (const draft of approved) {
+  // Process drafts concurrently with bounded parallelism (#008)
+  const CONCURRENCY = 5;
+  const queue = [...approved];
+  const inFlight: Promise<void>[] = [];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function processDraft(draft: any) {
     const contact = draft.contacts as unknown as {
       email: string;
       name: string;
@@ -84,7 +90,9 @@ export async function sendApprovedOutreach(): Promise<{
         .eq("id", draft.contact_id)
         .eq("status", "lead");
 
-      sent.push(`Sent to ${contact.name} (${contact.email}): "${draft.subject}"`);
+      sent.push(
+        `Sent to ${contact.name} (${contact.email}): "${draft.subject}"`
+      );
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       failed.push(`Failed to send to ${contact.email}: ${errorMsg}`);
@@ -93,6 +101,19 @@ export async function sendApprovedOutreach(): Promise<{
         .from("outreach_drafts")
         .update({ status: "failed" })
         .eq("id", draft.id);
+    }
+  }
+
+  while (queue.length > 0 || inFlight.length > 0) {
+    while (inFlight.length < CONCURRENCY && queue.length > 0) {
+      const draft = queue.shift()!;
+      const promise = processDraft(draft).then(() => {
+        inFlight.splice(inFlight.indexOf(promise), 1);
+      });
+      inFlight.push(promise);
+    }
+    if (inFlight.length > 0) {
+      await Promise.race(inFlight);
     }
   }
 

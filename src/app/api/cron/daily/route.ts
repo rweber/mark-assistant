@@ -6,6 +6,7 @@ import {
   type DailyEmailData,
 } from "@/lib/email/templates/daily-update";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { escapeHtml } from "@/lib/utils/html";
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
         await sendEmail({
           to: adminEmail,
           subject: "Mark: Daily cron failed",
-          html: `<p>Mark's daily cron job failed:</p><pre>${errorMessage}</pre>`,
+          html: `<p>Mark's daily cron job failed:</p><pre>${escapeHtml(errorMessage)}</pre>`,
           text: `Mark's daily cron job failed:\n${errorMessage}`,
         });
       } catch {

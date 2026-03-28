@@ -3,6 +3,8 @@
  * Plain HTML — no react-email dependency needed for v1.
  */
 
+import { escapeHtml as esc } from "@/lib/utils/html";
+
 export interface DailyEmailData {
   ownerName: string;
   prospectReplies: Array<{
@@ -242,10 +244,3 @@ function renderDailyEmailText(
   return text;
 }
 
-function esc(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
