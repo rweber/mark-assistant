@@ -110,10 +110,10 @@ An autonomous email agent ("Mark") that:
 Set up the database, auth, email, and a working agent loop that sends a daily email.
 
 **1.1 Project Setup**
-- [ ] Run `npm install` and verify Next.js 16 docs at `node_modules/next/dist/docs/`
-- [ ] Install dependencies: `@anthropic-ai/sdk`, `@supabase/supabase-js`, `resend`, `zod`, `googleapis`
-- [ ] Set up `.env.local` with: `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `CRON_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
-- [ ] Configure `vercel.json` with cron schedule
+- [x] Run `npm install` and verify Next.js 16 docs at `node_modules/next/dist/docs/`
+- [x] Install dependencies: `@anthropic-ai/sdk`, `@supabase/supabase-js`, `resend`, `zod`, `googleapis`
+- [x] Set up `.env.local` with: `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `CRON_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- [x] Configure `vercel.json` with cron schedule
 - [ ] Set up Resend custom domain for `mark@vpak.com` (DNS: SPF, DKIM, DMARC)
 
 **1.2 Supabase Schema**
@@ -220,14 +220,14 @@ erDiagram
     users ||--o{ outreach_drafts : "approves"
 ```
 
-- [ ] Create Supabase project and apply migrations for all tables above
-- [ ] Set up Row Level Security: owners see their business data, admins see everything
-- [ ] Create `src/lib/supabase/client.ts` (browser client) and `src/lib/supabase/server.ts` (server client with service role)
+- [x] Create Supabase project and apply migrations for all tables above
+- [x] Set up Row Level Security: owners see their business data, admins see everything
+- [x] Create `src/lib/supabase/client.ts` (browser client) and `src/lib/supabase/server.ts` (server client with service role)
 
 **1.3 Agent Core**
-- [ ] Create `src/lib/agent/mark.ts` — the main agent loop using Claude SDK `toolRunner`
-- [ ] Define Mark's system prompt in `src/lib/agent/system-prompt.ts` — persona, rules, business context injection
-- [ ] Create agent tools (`src/lib/agent/tools/`):
+- [x] Create `src/lib/agent/mark.ts` — the main agent loop using Claude SDK `toolRunner`
+- [x] Define Mark's system prompt in `src/lib/agent/system-prompt.ts` — persona, rules, business context injection
+- [x] Create agent tools (`src/lib/agent/tools/`):
   - `get-business-context.ts` — read business context from Supabase
   - `get-pending-followups.ts` — query contacts needing follow-up
   - `search-leads.ts` — web search via Tavily/Serper API
@@ -235,41 +235,41 @@ erDiagram
   - `draft-outreach.ts` — create an outreach draft in `outreach_drafts` table
   - `get-conversation-history.ts` — fetch recent email messages for context
   - `read-shared-file.ts` — read content from a Google Drive file shared with Mark
-- [ ] Add time budget guard: if approaching 270s, force the agent to wrap up
-- [ ] Add iteration cap: max 15 LLM calls per cron run
-- [ ] Add cost tracking: log `tokens_used` and `llm_calls` to `agent_runs`
+- [x] Add time budget guard: if approaching 270s, force the agent to wrap up
+- [x] Add iteration cap: max 15 LLM calls per cron run
+- [x] Add cost tracking: log `tokens_used` and `llm_calls` to `agent_runs`
 
 **1.4 Daily Cron Route**
-- [ ] Create `src/app/api/cron/daily/route.ts`
-- [ ] Verify cron secret (`Authorization: Bearer <CRON_SECRET>`)
-- [ ] Load business context and pending state from Supabase
-- [ ] Run Mark's agent loop with context
-- [ ] Compose daily email from agent output
-- [ ] Send via Resend to the owner's email address
-- [ ] Log the run to `agent_runs` table
-- [ ] On failure: log error, send a simple "Mark encountered an issue" email to admin
+- [x] Create `src/app/api/cron/daily/route.ts`
+- [x] Verify cron secret (`Authorization: Bearer <CRON_SECRET>`)
+- [x] Load business context and pending state from Supabase
+- [x] Run Mark's agent loop with context
+- [x] Compose daily email from agent output
+- [x] Send via Resend to the owner's email address
+- [x] Log the run to `agent_runs` table
+- [x] On failure: log error, send a simple "Mark encountered an issue" email to admin
 
 **1.5 Daily Email Format**
-- [ ] Create email template (`src/lib/email/templates/daily-update.tsx` using React Email)
-- [ ] Sections (ordered by priority):
+- [x] Create email template (`src/lib/email/templates/daily-update.ts` — plain HTML, no react-email needed)
+- [x] Sections (ordered by priority):
   1. Prospect replies (if any) — highest urgency
   2. Follow-up reminders — "You should reach out to X today because Y"
   3. New leads found — brief summary with why they're relevant
   4. Draft outreach for approval — full email text, reply "APPROVE 1" / "APPROVE ALL" / "EDIT 1: [changes]"
   5. What Mark learned today — new business context accumulated
-- [ ] Include at bottom: "Reply to this email to talk to Mark"
-- [ ] Each daily email starts a new thread (new `Message-ID`, no `In-Reply-To`)
-- [ ] Cap at 5 items per section to prevent overwhelming emails
+- [x] Include at bottom: "Reply to this email to talk to Mark"
+- [x] Each daily email starts a new thread (new `Message-ID`, no `In-Reply-To`)
+- [x] Cap at 5 items per section to prevent overwhelming emails
 
 #### Phase 2: Two-Way Email (Inbound Processing + Outreach Sending)
 
 Enable the owner to reply to Mark and approve outreach.
 
 **2.1 Inbound Email Webhook**
-- [ ] Create `src/app/api/email/inbound/route.ts`
-- [ ] Verify Resend webhook signature on every request (security requirement — not optional)
-- [ ] Fetch full email body via Resend Received Emails API (webhook only contains metadata)
-- [ ] Implement email routing (`src/lib/email/router.ts`):
+- [x] Create `src/app/api/email/inbound/route.ts`
+- [x] Verify Resend webhook signature on every request (security requirement — not optional)
+- [x] Fetch full email body via Resend Received Emails API (webhook only contains metadata)
+- [x] Implement email routing (`src/lib/email/router.ts`):
 
 ```
 Inbound email to mark@vpak.com
@@ -290,31 +290,31 @@ Inbound email to mark@vpak.com
   +-- Unknown sender → LOG and ignore (don't process as command)
 ```
 
-- [ ] Strip email signatures and quoted text before processing (use a library like `plancklabs/mailstrip` or regex-based stripping)
-- [ ] Return 200 immediately, process in `after()` callback (per Envirocon webhook pattern)
+- [x] Strip email signatures and quoted text before processing (regex-based stripping in router.ts)
+- [x] Return 200 immediately, process in `after()` callback (per Envirocon webhook pattern)
 
 **2.2 Owner Reply Processing**
-- [ ] Parse owner reply text (stripped of signatures/quotes)
-- [ ] For conversational replies: run Mark's agent loop with the reply as context, send response email maintaining thread (`In-Reply-To` + `References` headers)
-- [ ] For approval commands: parse with keyword matching first (not LLM) — "APPROVE 1", "APPROVE ALL", "REJECT 3", "EDIT 2: [new text]"
+- [x] Parse owner reply text (stripped of signatures/quotes)
+- [x] For conversational replies: run Mark's agent loop with the reply as context, send response email maintaining thread (`In-Reply-To` + `References` headers)
+- [x] For approval commands: parse with keyword matching first (not LLM) — "APPROVE 1", "APPROVE ALL", "REJECT 3", "EDIT 2: [new text]"
 - [ ] Fall back to Haiku for ambiguous replies ("yeah send it" → classify as approval + identify which draft)
-- [ ] Use claim-once semantics for approvals: set `status = 'approved'` atomically in a Supabase transaction, reject if already approved/sent (prevents double-send on webhook retry)
+- [x] Use claim-once semantics for approvals: set `status = 'approved'` atomically in a Supabase transaction, reject if already approved/sent (prevents double-send on webhook retry)
 
 **2.3 Outreach Sending**
-- [ ] When a draft is approved: send via Resend from `mark@vpak.com`
-- [ ] Set proper threading headers (new thread per prospect)
-- [ ] From name: "Mark | VPAK" (transparent that it's an assistant, not deceptive)
-- [ ] Include CAN-SPAM compliance footer: physical mailing address + unsubscribe link
-- [ ] Update `outreach_drafts.status` to `'sent'`, store `resend_message_id`
-- [ ] Track in `email_messages` table for conversation history
-- [ ] Implement unsubscribe webhook: when prospect clicks unsubscribe, update contact status to `'dead'` and never email them again
+- [x] When a draft is approved: send via Resend from `mark@vpak.com`
+- [x] Set proper threading headers (new thread per prospect)
+- [x] From name: "Mark | VPAK" (transparent that it's an assistant, not deceptive)
+- [x] Include CAN-SPAM compliance footer: physical mailing address + unsubscribe link
+- [x] Update `outreach_drafts.status` to `'sent'`, store `resend_message_id`
+- [x] Track in `email_messages` table for conversation history
+- [x] Implement unsubscribe webhook: when prospect clicks unsubscribe, update contact status to `'dead'` and never email them again
 
 **2.4 Prospect Reply Handling**
-- [ ] When a prospect replies to outreach: immediately forward the full reply to the owner's email
-- [ ] Log the reply in `email_messages` and update contact status
-- [ ] Include in the next daily email summary with context
-- [ ] Do NOT auto-respond to prospects — the owner handles real conversations
-- [ ] If prospect replies with unsubscribe language ("stop", "unsubscribe", "remove me"), auto-process as opt-out
+- [x] When a prospect replies to outreach: immediately forward the full reply to the owner's email
+- [x] Log the reply in `email_messages` and update contact status
+- [x] Include in the next daily email summary with context
+- [x] Do NOT auto-respond to prospects — the owner handles real conversations
+- [x] If prospect replies with unsubscribe language ("stop", "unsubscribe", "remove me"), auto-process as opt-out
 
 #### Phase 3: Admin Dashboard + Onboarding
 
